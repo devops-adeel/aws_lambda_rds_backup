@@ -12,29 +12,46 @@ __version__ = "0.1"
 
 import unittest
 from datetime import datetime
+from botocore.exceptions import ClientError
 import boto3
 
 RDS = boto3.client('rds')
+DBINSTANCEID = 'pass'
 
-def retrieve_latest_snapshot():
+def retrieve_latest_snapshot(instanceid):
     """
     Function to retrieve latest snapshot
     """
-    response = {}
 
     try:
         snapshots = RDS.describe_db_snapshots(
-            DBInstanceIdentifier=DBINSTANCEID,
-            SnapshotType='manual',
+            DBInstanceIdentifier=instanceid
             )
-        max(snapshots['DBSnapshots'].itervalues('SnapshotCreateTime'),
-            key=lambda latest: latest if isinstance(latest, datetime) else datetime.min)
+        newest = max(snapshots['DBSnapshots'].itervalues('SnapshotCreateTime'),
+                     key=lambda latest: latest if isinstance(latest, datetime) else datetime.min)
 
-    except Exception as error:
+        return newest
+
+    except ClientError as error:
+        print(error)
+
+def main(instanceid):
+    """
+    Main function restore from latest snapshot.
+    """
+    try:
+        newest = retrieve_latest_snapshot(instanceid)
+
+        restore = RDS.restore_db_instance_from_db_snapshot(
+            DBInstanceIdentifier=instanceid,
+            DBSnapshotIdentifier=newest
+            )
+        return restore['DBInstance']['StatusInfos']['Status']
+    except ClientError as error:
         print(error)
 
 if __name__ == "__main__":
-    main()
+    main(instanceid)
     import doctest
     doctest.testmod()
     class MyTest(unittest.TestCase):
@@ -45,4 +62,4 @@ if __name__ == "__main__":
             """
             Test Function
             """
-            self.assertEqual(main())
+            self.assertEqual(main(instancid))
