@@ -11,10 +11,15 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __version__ = "0.1"
 
 import unittest
+import datetime
+import os
 import cfnresponse
 import boto3
 
 RDS = boto3.client('rds')
+DBSNAPSHOTID = os.environ.get('DBSnapshotIdentifier')
+DBINSTANCEID = os.environ.get('DBInstanceIdentifier')
+NOW = datetime.datetime.now()
 
 def handler(event, context):
     """
@@ -22,16 +27,11 @@ def handler(event, context):
     """
     response = {}
 
-    # There is nothing to do for a delete request
-    if event['RequestType'] == 'Delete':
-        cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
-        return
-
     try:
         response = RDS.create_db_snapshot(
-            DBSnapshotIdentifier=event['ResourceProperties']['DBSnapshotIdentifier'],
-            DBInstanceIdentifier=event['ResourceProperties']['DBInstanceIdentifier']
-        )
+            DBSnapshotIdentifier=str(DBSNAPSHOTID) + NOW.strftime("%Y-%m-%d"),
+            DBInstanceIdentifier=DBINSTANCEID
+            )
         response['DBSnapshot'].pop('SnapshotCreateTime')
         response['DBSnapshot'].pop('InstanceCreateTime')
         cfnresponse.send(event, context, cfnresponse.SUCCESS, response)
@@ -52,4 +52,3 @@ if __name__ == "__main__":
             Test Function
             """
             self.assertEqual(handler(event, context),)
-
