@@ -159,4 +159,5 @@ tags
 pyvenv.cfg
 pip-selfcheck.json
 
+Pipfile.lock
 # End of https://www.gitignore.io/api/osx,python,vim,virtualenv
