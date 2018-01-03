@@ -6,7 +6,8 @@ Author:         Adeel Ahmad
 Description:    AWS Lambda function to create RDS Backup
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, \
+        print_function, unicode_literals
 
 __version__ = "0.1"
 
@@ -31,6 +32,7 @@ DBSNAPSHOTID = os.environ.get('DBSnapshotIdentifier')
 DBINSTANCEID = os.environ.get('DBInstanceIdentifier')
 NOW = datetime.datetime.now()
 
+
 def send(event, context, response_status, reason= \
         None, response_data=None, physical_resource_id=None):
     """
@@ -42,7 +44,8 @@ def send(event, context, response_status, reason= \
             'Status': response_status,
             'Reason': reason or "See the details in \
             CloudWatch Log Stream: " + context.log_stream_name,
-            'PhysicalResourceId': physical_resource_id or context.log_stream_name,
+            'PhysicalResourceId': physical_resource_id or
+                                  context.log_stream_name,
             'StackId': event['StackId'],
             'RequestId': event['RequestId'],
             'LogicalResourceId': event['LogicalResourceId'],
@@ -64,6 +67,7 @@ def send(event, context, response_status, reason= \
         print("Failed executing HTTP request: {}".format(exc.code))
         return False
 
+
 def get_my_log_stream(context):
     """
     Logging function for the lambda handler to call.
@@ -72,6 +76,17 @@ def get_my_log_stream(context):
             context.log_group_name + '\n' +  "Request ID:", context.aws_request_id \
             + '\n' +  "Mem. limits(MB):", context.memory_limit_in_mb + '\n' + \
             "Time remaining (MS):", context.get_remaining_time_in_millis())
+
+
+def query_db_cluster(instanceid):
+    """
+    Querying whether DB is Clustered or not
+    """
+    query = RDS.describe_db_instances(
+            DBInstanceIdentifier=DBINSTANCEID
+            )
+
+
 
 def handler(event, context):
     """
