@@ -36,6 +36,21 @@ def retrieve_latest_snapshot(instanceid):
         print(error)
 
 
+def query_db_cluster(instanceid):
+    """
+    Querying whether DB is Clustered or not
+    """
+    try:
+        db_instance = RDS.describe_db_instances(
+            DBInstanceIdentifier=instanceid
+            )
+        return db_instance['DBInstances'][0]['DBClusterIdentifier']
+
+    except KeyError:
+        # print("Not part of a DB Cluster")
+        return False
+
+
 def main(instanceid):
     """
     Main function restore from latest snapshot.

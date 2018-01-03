@@ -82,10 +82,14 @@ def query_db_cluster(instanceid):
     """
     Querying whether DB is Clustered or not
     """
-    query = RDS.describe_db_instances(
-            DBInstanceIdentifier=DBINSTANCEID
+    try:
+        db_instance = RDS.describe_db_instances(
+            DBInstanceIdentifier=instanceid
             )
-
+        return db_instance['DBInstances'][0]['DBClusterIdentifier']
+    except KeyError:
+        # print("Not part of a DB Cluster")
+        return False
 
 
 def handler(event, context):
@@ -93,18 +97,27 @@ def handler(event, context):
     Handler to create RDS Backups
     """
     response = {}
+    if query_db_cluster(DBINSTANCEID):
+        cluster_id = query_db_cluster(DBINSTANCEID)
+        try:
+            response = RDS.create_db_cluster_snapshot(
+                DBClusterSnapshotIdentifier=str(DBSNAPSHOTID) + NOW.strftime("%Y-%m-%d"),
+                DBClusterIdentifier=cluster_id
+                )
+        except ClientError as error:
+            print(error)
+    else:
+        try:
+            response = RDS.create_db_snapshot(
+                DBSnapshotIdentifier=str(DBSNAPSHOTID) + NOW.strftime("%Y-%m-%d"),
+                DBInstanceIdentifier=DBINSTANCEID
+                )
+            response['DBSnapshot'].pop('SnapshotCreateTime')
+            response['DBSnapshot'].pop('InstanceCreateTime')
+            send(event, context, SUCCESS, response)
+        except ClientError as error:
+            print(error)
 
-    try:
-        response = RDS.create_db_snapshot(
-            DBSnapshotIdentifier=str(DBSNAPSHOTID) + NOW.strftime("%Y-%m-%d"),
-            DBInstanceIdentifier=DBINSTANCEID
-            )
-        response['DBSnapshot'].pop('SnapshotCreateTime')
-        response['DBSnapshot'].pop('InstanceCreateTime')
-        send(event, context, SUCCESS, response)
-
-    except ClientError as error:
-        print(error)
 
 if __name__ == "__main__":
     handler(event, context)
