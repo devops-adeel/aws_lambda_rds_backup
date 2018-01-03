@@ -88,7 +88,6 @@ def query_db_cluster(instanceid):
             )
         return db_instance['DBInstances'][0]['DBClusterIdentifier']
     except KeyError:
-        # print("Not part of a DB Cluster")
         return False
 
 
