@@ -12,4 +12,3 @@ name = "pypi"
 [packages]
 
 "boto3" = "*"
-botocore = "*"
